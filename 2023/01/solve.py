@@ -11,7 +11,7 @@ def get_lines(filename: str) -> list[str]:
     return lines
 
 
-def get_number_from_line(line: str) -> int:
+def get_number_from_line_1(line: str) -> int:
     digits = [c for c in line if c.isdigit()]
     number = 10 * int(digits[0]) + int(digits[-1])
     return number
@@ -19,7 +19,7 @@ def get_number_from_line(line: str) -> int:
 
 def part_1() -> None:
     lines = get_lines(FILENAME)
-    total = sum(get_number_from_line(line) for line in lines)
+    total = sum(get_number_from_line_1(line) for line in lines)
     print("Part 1:", total)
 
 
@@ -50,7 +50,7 @@ def is_single_digit(__str: str) -> bool:
     return len(__str) == 1 and __str.isdigit()
 
 
-def get_number_from_line_part_2(line: str) -> int:
+def get_number_from_line_2(line: str) -> int:
     substrings = get_ordered_substrings(line)
     first = get_first_digit(substrings)
     last = get_first_digit(reversed(substrings))
@@ -71,11 +71,11 @@ def get_first_digit(substrings: Iterable[str]) -> int:
 
 
 def part_2() -> None:
-    lines = get_lines(FILENAME)
-    total = sum(get_number_from_line_part_2(line) for line in lines)
+    lines = get_lines("test_input_2.txt")
+    total = sum(get_number_from_line_2(line) for line in lines)
     print("Part 2:", total)
 
 
 if __name__ == "__main__":
-    part_1()
+    # part_1()
     part_2()
