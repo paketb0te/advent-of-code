@@ -66,17 +66,16 @@ def test_get_partnum_from_multiple_lines():
 
 def test_get_adjacenct_field_coordinates():
     given = solve.PartNumber(start=3, end=5, line_no=1, number=456)
-    previous_line_adj_coordinates = [solve.Coordinates(x=x, y=0) for x in range(2, 7)]
-    same_line_adj_coordinates = [
-        solve.Coordinates(x=2, y=1),
-        solve.Coordinates(x=6, y=1),
-    ]
-    next_line_adj_coordinates = [solve.Coordinates(x=x, y=2) for x in range(2, 7)]
+    previous_line_adj_coordinates = set(
+        solve.Coordinates(x=x, y=0) for x in range(2, 7)
+    )
+    same_line_adj_coordinates = set(solve.Coordinates(x=x, y=1) for x in (2, 6))
+    next_line_adj_coordinates = set(solve.Coordinates(x=x, y=2) for x in range(2, 7))
 
     want = (
         previous_line_adj_coordinates
-        + same_line_adj_coordinates
-        + next_line_adj_coordinates
+        | same_line_adj_coordinates
+        | next_line_adj_coordinates
     )
     got = given.get_adj_coordinates()
 
@@ -99,4 +98,10 @@ def test_dot_and_digits_are_not_symbols():
 def test_part_1_returns_correct_sum():
     want = 4361
     got = solve.part_1(TEST_INPUT)
+    assert got == want
+
+
+def test_part_2():
+    want = 467835
+    got = solve.part_2(TEST_INPUT)
     assert got == want

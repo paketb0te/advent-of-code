@@ -1,3 +1,4 @@
+import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,7 +11,7 @@ def get_lines(filename: str) -> list[str]:
         return fh.read().splitlines()
 
 
-@dataclass
+@dataclass(frozen=True)
 class Coordinates:
     x: int
     y: int
@@ -23,23 +24,22 @@ class PartNumber:
     line_no: int
     number: int
 
-    def get_adj_coordinates(self) -> list[Coordinates]:
-        previous_line_adj_coordinates: list[Coordinates] = [
+    def get_adj_coordinates(self) -> set[Coordinates]:
+        previous_line_adj_coordinates: set[Coordinates] = set(
             Coordinates(x=x, y=self.line_no - 1)
             for x in range(self.start - 1, self.end + 2)
-        ]
-        same_line_adj_coordinates = [
-            Coordinates(x=self.start - 1, y=self.line_no),
-            Coordinates(x=self.end + 1, y=self.line_no),
-        ]
-        next_line_adj_coordinates: list[Coordinates] = [
+        )
+        same_line_adj_coordinates: set[Coordinates] = set(
+            Coordinates(x=x, y=self.line_no) for x in (self.start - 1, self.end + 1)
+        )
+        next_line_adj_coordinates: set[Coordinates] = set(
             Coordinates(x=x, y=self.line_no + 1)
             for x in range(self.start - 1, self.end + 2)
-        ]
+        )
         return (
             previous_line_adj_coordinates
-            + same_line_adj_coordinates
-            + next_line_adj_coordinates
+            | same_line_adj_coordinates
+            | next_line_adj_coordinates
         )
 
 
@@ -125,5 +125,33 @@ def part_1(filename: str):
     return total
 
 
+def part_2(filename: str):
+    lines = get_lines(filename=filename)
+    part_numbers = parse_lines(lines)
+    total = 0
+
+    for part_num_1, part_num_2 in itertools.combinations(part_numbers, r=2):
+        coordinates_1 = part_num_1.get_adj_coordinates()
+        coordinates_2 = part_num_2.get_adj_coordinates()
+        intersecting_coordinates = coordinates_1 & coordinates_2
+        if gear_symbol_at_coordinates(
+            lines=lines, coordinates=intersecting_coordinates
+        ):
+            total += part_num_1.number * part_num_2.number
+
+    return total
+
+
+def gear_symbol_at_coordinates(lines: list[str], coordinates: set[Coordinates]) -> bool:
+    for coordinate in coordinates:
+        try:
+            if lines[coordinate.y][coordinate.x] == "*":
+                return True
+        except IndexError:
+            continue
+    return False
+
+
 if __name__ == "__main__":
     print("Part 1:", part_1(INPUT))
+    print("Part 2:", part_2(INPUT))
