@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
 import itertools
+from dataclasses import dataclass, field
 from pathlib import Path
 
 INPUT = "input.txt"
@@ -15,16 +15,25 @@ def get_lines(filename: str) -> list[str]:
 class MapEntry:
     dst_start: int
     src_start: int
-    range: int
+    range_length: int
 
     def map(self, value: int) -> int:
         if not self.value_in_range(value):
-            raise ValueError(f"src out of bounds: {self.src_start=} {self.range=}")
-        offset = self.dst_start - self.src_start
-        return value + offset
+            raise ValueError(
+                f"src out of bounds: {self.src_start=} {self.range_length=}"
+            )
+        return value + self.offset
 
     def value_in_range(self, value: int) -> bool:
-        return self.src_start <= value <= self.src_start + self.range - 1
+        return self.src_start <= value <= self.src_start + self.range_length - 1
+
+    @property
+    def range(self) -> range:
+        return range(self.src_start, self.src_start + self.range_length)
+
+    @property
+    def offset(self) -> int:
+        return self.dst_start - self.src_start
 
 
 @dataclass()
@@ -56,7 +65,7 @@ def parse_map_entry_line(line: str) -> MapEntry:
     return MapEntry(
         dst_start=int(dst_start),
         src_start=int(src_start),
-        range=int(range_length),
+        range_length=int(range_length),
     )
 
 
@@ -72,7 +81,7 @@ def build_maps_from_lines(lines: list[str]) -> list[Map]:
             source, target = parse_mapping_name(line)
             current_map = Map(source=source, target=target)
         elif line == "" and current_map is not None:
-            current_map.entries = current_entries
+            current_map.entries = sorted(current_entries, key=lambda x: x.src_start)
             maps.append(current_map)
             current_entries = []
             current_map = None
@@ -110,20 +119,90 @@ def part_1(filename: str):
 ### Part 2
 
 
-@dataclass
-class Range:
-    start: int
-    length: int
-
-
-def parse_seeds_as_ranges(line: str) -> list[Range]:
+def parse_seeds_as_ranges(line: str) -> list[range]:
     values = parse_seeds(line)
     return [
-        Range(start=start, length=length)
-        for start, length in itertools.batched(values, 2)
+        range(start, start + length) for start, length in itertools.batched(values, 2)
     ]
+
+
+def map_range_to_ranges(range_: range, map: Map) -> list[range]:
+    ranges: list[range] = []
+
+    start = range_[0]
+    end = range_[-1]
+
+    for entry in map.entries:
+        if start < entry.range[0]:
+            if end < entry.range[0]:
+                ranges.append(range(start, end + 1))
+                break
+
+            elif entry.range[0] <= end <= entry.range[-1]:
+                ranges.append(range(start, entry.range[0]))
+                ranges.append(
+                    range(entry.range[0] + entry.offset, end + entry.offset + 1)
+                )
+                break
+
+            elif entry.range[-1] < end:
+                ranges.append(range(start, entry.range[0]))
+                ranges.append(
+                    range(
+                        entry.range[0] + entry.offset,
+                        entry.range[-1] + entry.offset + 1,
+                    )
+                )
+                start = entry.range[-1]
+
+        elif entry.range[0] <= start <= entry.range[-1]:
+            if end < entry.range[0]:
+                raise ValueError("end lower than start")
+
+            elif entry.range[0] <= end <= entry.range[-1]:
+                r = range(start + entry.offset, end + entry.offset + 1)
+                ranges.append(r)
+                break
+
+            elif entry.range[-1 < end]:
+                r = range(start + entry.offset, entry.range[-1] + entry.offset + 1)
+                ranges.append(r)
+                start = entry.range[-1] + 1
+
+        elif entry.range[-1] < start:
+            continue
+
+    else:
+        ranges.append(range(start, end + 1))
+
+    return ranges
+
+
+def map_ranges_to_ranges(ranges: list[range], map: Map) -> list[range]:
+    return_ranges: list[range] = []
+    for r in ranges:
+        return_ranges += map_range_to_ranges(r, map)
+
+    return return_ranges
+
+
+def part_2(filename: str):
+    lines = get_lines(filename)
+    seed_ranges = parse_seeds_as_ranges(line=lines[0])
+
+    # Append an empty line so the loop in
+    # build_maps_from_lines() recognizes the last Map
+    lines.append("")
+
+    maps = build_maps_from_lines(lines=lines[2:])
+
+    ranges = seed_ranges
+    for m in maps:
+        ranges = map_ranges_to_ranges(ranges, m)
+
+    return min(r[0] for r in ranges)
 
 
 if __name__ == "__main__":
     print("Part 1:", part_1(INPUT))
-    # print("Part 2:", part_2(INPUT))
+    print("Part 2:", part_2(INPUT))
