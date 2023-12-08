@@ -133,6 +133,12 @@ def map_range_to_ranges(range_: range, map: Map) -> list[range]:
     end = range_[-1]
 
     for entry in map.entries:
+        # We know that the "mapping ranges" (map.entries) are sorted, so we "only"
+        # need to check if the start and end of the input range falls
+        # {before, inside, after} the "mapping range".
+
+        # This monstrosity handles all those combinations and
+        # builds the output ranges
         if start < entry.range[0]:
             if end < entry.range[0]:
                 ranges.append(range(start, end + 1))
