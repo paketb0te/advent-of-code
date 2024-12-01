@@ -21,18 +21,12 @@ def get_lists(file: Path) -> tuple[list[int], list[int]]:
 
 
 def part_1(left: list[int], right: list[int]) -> int:
-    total = 0
-    for l, r in zip(left, right):
-        total += abs(l - r)
-    return total
+    return sum(abs(l - r) for l, r in zip(left, right))
 
 
 def part_2(left: list[int], right: list[int]) -> int:
-    total = 0
     right_counter = Counter(right)
-    for element in left:
-        total += element * right_counter.get(element, 0)
-    return total
+    return sum(number * right_counter.get(number, 0) for number in left)
 
 
 def main() -> None:
