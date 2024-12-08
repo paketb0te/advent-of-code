@@ -111,8 +111,52 @@ def part_1() -> int:
     return len(antinodes)
 
 
-def part_2() -> int: ...
+def get_antinodes_for_antennae_of_same_frequency_with_resonant_harmonics(
+    antennae: list[Antenna],
+) -> set[Location]:
+
+    antinodes: set[Location] = set()
+
+    for antenna_pair in permutations(antennae, r=2):
+        a_1, a_2 = antenna_pair
+        step_x = a_2.location.x - a_1.location.x
+        step_y = a_2.location.y - a_1.location.y
+
+        step_count = 0
+        while True:
+            location = Location(
+                x=a_1.location.x + step_count * step_x,
+                y=a_1.location.y + step_count * step_y,
+            )
+
+            x_ok = 0 <= location.x < upper_bound_x
+            y_ok = 0 <= location.y < upper_bound_y
+            if x_ok and y_ok:
+                antinodes.add(location)
+                step_count += 1
+            else:
+                break
+
+    return antinodes
+
+
+def part_2() -> int:
+    map_ = load_map()
+    all_antennae = get_antennae(map_)
+    antennae_by_frequency = get_frequency_to_antennae_map(all_antennae)
+
+    antinodes: set[Location] = set()
+
+    for antennae in antennae_by_frequency.values():
+        antinodes.update(
+            get_antinodes_for_antennae_of_same_frequency_with_resonant_harmonics(
+                antennae
+            )
+        )
+
+    return len(antinodes)
 
 
 if __name__ == "__main__":
     print(part_1())
+    print(part_2())
