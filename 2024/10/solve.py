@@ -90,7 +90,28 @@ def calculate_score_for_trailhead(pos: Postition, map_: list[list[int]]):
     return score
 
 
-def part_2(file: Path) -> int: ...
+def part_2(file: Path) -> int:
+    map_ = load_map(file)
+
+    total_rating = 0
+    for i, line in enumerate(map_):
+        for j, height in enumerate(line):
+            if height == 0:
+                pos = Postition(i=i, j=j)
+                total_rating += calculate_rating_for_trailhead(pos=pos, map_=map_)
+
+    return total_rating
+
+
+def calculate_rating_for_trailhead(pos: Postition, map_: list[list[int]]):
+    root = Node(
+        pos=pos,
+        value=map_[pos.i][pos.j],
+        children=get_child_nodes(curr_pos=pos, map_=map_),
+    )
+    rating = len([leaf for leaf in get_leaf_nodes(root) if leaf.value == 9])
+
+    return rating
 
 
 if __name__ == "__main__":
